@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Servicekollen Röjsåg</title>
+<style>
+:root{--bg:#0b1220;--panel:#111827;--panel2:#1f2937;--text:#f8fafc;--muted:#cbd5e1;--accent:#f59e0b;--good:#22c55e;--warn:#eab308;--bad:#ef4444;--line:#334155;--blue:#38bdf8}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#07101f,#111827);color:var(--text)}
+header{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:14px 14px 10px}
+.wrap{max-width:980px;margin:auto}.brand{display:flex;justify-content:space-between;gap:12px;align-items:center}.brand h1{font-size:1.25rem;margin:0}.brand small{color:var(--muted)}
+nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}nav button{background:#1e293b;color:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 8px;font-weight:800;font-size:.82rem}nav button.active{background:var(--accent);color:#111827;border-color:var(--accent)}
+main{padding:16px 14px 90px}.page{display:none}.page.active{display:block}.card{background:rgba(17,24,39,.98);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.stat{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px}.stat strong{font-size:1.55rem;display:block}.muted{color:var(--muted)}
+label{display:block;font-weight:800;margin:10px 0 6px}input,select,textarea{width:100%;background:#0f172a;color:#fff;border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}textarea{min-height:92px;resize:vertical}
+.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:900;cursor:pointer}.primary{background:var(--accent);color:#111827}.secondary{background:#1e293b;color:#fff;border:1px solid var(--line)}.danger{background:var(--bad);color:white}.good{background:var(--good);color:#052e16}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}.service-item{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}.service-item h3{font-size:1rem;margin:0 0 8px}.status-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.status-btn{background:#1e293b;color:#fff;border:1px solid var(--line);padding:10px 6px;border-radius:10px;font-weight:800}.status-btn.sel-ok{background:#14532d;border-color:var(--good)}.status-btn.sel-fix{background:#713f12;border-color:var(--warn)}.status-btn.sel-na{background:#334155}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:.78rem;font-weight:800}.b-ok{background:#14532d;color:#bbf7d0}.b-fix{background:#713f12;color:#fde68a}.b-stop{background:#7f1d1d;color:#fecaca}.b-neutral{background:#334155;color:#e2e8f0}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}.hidden{display:none!important}.notice{background:#172554;border:1px solid #1d4ed8;border-radius:12px;padding:12px;color:#dbeafe}.footer-note{font-size:.82rem;color:var(--muted);text-align:center;margin-top:18px}
+@media(max-width:600px){nav{grid-template-columns:repeat(2,1fr)}.row{display:block}.row>*{margin-bottom:8px}.status-row{grid-template-columns:1fr}.brand{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="brand"><div><h1>Servicekollen Röjsåg</h1><small>Vägservice Centralen • v1.2 • Supabase</small></div><div class="row" style="align-items:center"><span class="badge b-neutral" id="storageBadge">Ansluter…</span><button class="btn secondary hidden" id="logoutBtn" type="button">Logga ut</button></div></div>
+<nav>
+<button data-page="home" class="active">Översikt</button>
+<button data-page="service">Ny service</button>
+<button data-page="machines">Maskiner</button>
+<button data-page="admin" id="adminNav">Admin</button>
+</nav></div></header>
+<div id="authGate" class="hidden" style="position:fixed;inset:0;z-index:50;background:rgba(2,6,23,.96);padding:24px 14px;overflow:auto">
+  <div class="wrap" style="max-width:520px;margin-top:8vh">
+    <div class="card">
+      <h2 style="margin-top:0">Logga in</h2>
+      <p class="muted">Servicekollen Röjsåg använder ditt VSCN-konto i Supabase.</p>
+      <label>E-post</label><input id="loginEmail" type="email" autocomplete="username" placeholder="namn@vscn.se">
+      <label>Lösenord</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Lösenord">
+      <button class="btn primary" id="loginBtn" type="button" style="width:100%;margin-top:14px">Logga in</button>
+      <div id="loginMessage" class="muted" style="margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+<main class="wrap">
+<section id="home" class="page active">
+<div class="card"><h2>Översikt</h2><p class="muted">Snabb status för registrerade röjsågar och serviceärenden.</p><div class="grid">
+<div class="stat"><span class="muted">Maskiner</span><strong id="statMachines">0</strong></div>
+<div class="stat"><span class="muted">Godkända</span><strong id="statOk">0</strong></div>
+<div class="stat"><span class="muted">Behöver åtgärd</span><strong id="statFix">0</strong></div>
+<div class="stat"><span class="muted">Ur drift</span><strong id="statStop">0</strong></div>
+</div></div>
+<div class="card"><h2>Senaste service</h2><div id="latestServices" class="empty">Ingen service registrerad ännu.</div></div>
+<div class="notice" id="syncNotice">Servicekollen använder central lagring i Supabase. Logga in för att läsa och registrera maskiner och service.</div>
+</section>
+
+<section id="service" class="page">
+<div class="card"><h2>Ny service</h2>
+<label>Välj maskin</label><select id="serviceMachine"></select>
+<div class="row"><div><label>Servicedatum</label><input id="serviceDate" type="date"></div><div><label>Utförd av</label><input id="serviceBy" placeholder="Namn"></div></div>
+</div>
+<div class="card"><h2>Kontrollpunkter</h2><div id="serviceItems"></div></div>
+<div class="card"><h2>Slutbedömning</h2>
+<label>Slutstatus</label><select id="finalStatus"><option value="ok">Godkänd</option><option value="fix">Behöver åtgärd</option><option value="stop">Ur drift</option></select>
+<label>Utförda åtgärder / kommentar</label><textarea id="serviceComment" placeholder="Exempel: Luftfilter rengjort, tändstift bytt..."></textarea>
+<label>Reservdelar använda</label><textarea id="serviceParts" placeholder="Del, artikelnummer, antal"></textarea>
+<div class="row"><button class="btn primary" id="saveService">Spara service</button><button class="btn secondary" id="resetService">Rensa formulär</button></div>
+</div>
+</section>
+
+<section id="machines" class="page">
+<div class="card"><h2>Maskinregister</h2><p class="muted">Lägg in varje röjsåg separat. Exakta modeller fyller vi på efter inventeringen.</p>
+<div class="row"><div><label>Märke</label><select id="machineBrand"><option>Husqvarna</option><option>STIHL</option></select></div><div><label>Modell</label><input id="machineModel" placeholder="Ex. 545RXT"></div></div>
+<div class="row"><div><label>Serienummer / Maskin-ID</label><input id="machineSerial" placeholder="Serienummer eller internt ID"></div><div><label>Placering</label><input id="machineLocation" placeholder="Ex. Verkstad / Bil 12"></div></div>
+<label>Anteckning</label><textarea id="machineNote" placeholder="Valfri information om maskinen"></textarea>
+<button class="btn primary" id="addMachine">Lägg till maskin</button>
+</div>
+<div class="card"><h2>Registrerade maskiner</h2><div id="machineList"></div></div>
+</section>
+
+<section id="admin" class="page">
+<div class="card"><h2>Admin</h2><p class="muted">Servicehistorik och status per maskin.</p><div id="adminTable"></div></div><div class="card"><h2>Anslutning</h2><div id="connectionInfo" class="notice">Kontrollerar lagringsläge…</div></div>
+<div class="card"><h2>Testverktyg</h2><p class="muted">Använd bara vid test av grundsystemet.</p><button class="btn danger" id="clearAll">Radera all lokal testdata</button></div>
+</section>
+<div class="footer-note">Servicekollen Röjsåg • v1.2 • Supabase-ansluten</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const DEFAULT_POINTS=[
+'Allmän rengöring och visuell kontroll','Skärutrustning / trimmerhuvud / klinga','Skydd och infästningar','Vinkelväxel och glapp','Luftfilter','Tändstift','Bränslesystem och slangar','Startapparat / startsnöre','Gasreglage och stoppknapp','Kylsystem / luftintag','Riggrör / drivaxel','Vibrationsdämpning','Provkörning: start, tomgång och acceleration'
+];
+const cfg=window.SERVICEKOLLEN_CONFIG||{};
+const cloudConfigured=Boolean(cfg.supabaseUrl && cfg.supabasePublishableKey && !cfg.supabaseUrl.includes('YOUR_'));
+const db=cloudConfigured?window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey):null;
+let machines=[]; let services=[]; let currentUser=null; let currentRole='user';
+const $=id=>document.getElementById(id);
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function nav(page){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));if(page==='service')renderServiceMachineOptions()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>nav(b.dataset.page));
+function machineLabel(m){return `${m.brand} ${m.model||'Okänd modell'} — ${m.serial||m.id}`}
+function statusBadge(s){if(s==='ok')return '<span class="badge b-ok">Godkänd</span>';if(s==='fix')return '<span class="badge b-fix">Behöver åtgärd</span>';if(s==='stop')return '<span class="badge b-stop">Ur drift</span>';return '<span class="badge b-neutral">Ej servad</span>'}
+function latestFor(mid){return services.filter(s=>s.machineId===mid).sort((a,b)=>b.created.localeCompare(a.created))[0]}
+function localLoad(){machines=JSON.parse(localStorage.getItem('skr_machines')||'[]');services=JSON.parse(localStorage.getItem('skr_services')||'[]')}
+function localSave(){localStorage.setItem('skr_machines',JSON.stringify(machines));localStorage.setItem('skr_services',JSON.stringify(services))}
+async function cloudLoad(){
+  const [{data:m,error:me},{data:s,error:se}]=await Promise.all([
+    db.from('machines').select('*').order('created_at',{ascending:true}),
+    db.from('services').select('*').order('created_at',{ascending:false})
+  ]);
+  if(me||se) throw me||se;
+  machines=(m||[]).map(x=>({id:x.id,brand:x.brand,model:x.model,serial:x.serial,location:x.location,note:x.note,created:x.created_at}));
+  services=(s||[]).map(x=>({id:x.id,machineId:x.machine_id,date:x.service_date,by:x.performed_by,checks:x.checks||[],finalStatus:x.final_status,comment:x.comment||'',parts:x.parts||'',created:x.created_at}));
+}
+async function persist(){if(cloudConfigured){await cloudLoad()}else localSave();renderAll()}
+async function loadProfile(){
+  if(!currentUser){currentRole='user';return}
+  const {data:profile,error}=await db.from('profiles').select('role,display_name').eq('id',currentUser.id).maybeSingle();
+  if(error) throw error;
+  currentRole=profile?.role||'user';
+  const adminNav=$('adminNav');
+  if(adminNav) adminNav.classList.toggle('hidden',currentRole!=='admin');
+  $('logoutBtn').classList.remove('hidden');
+  $('connectionInfo').innerHTML=`Ansluten som <b>${esc(currentUser.email||'användare')}</b>. Roll: <b>${esc(currentRole)}</b>.`;
+}
+function showLogin(message=''){
+  $('authGate').classList.remove('hidden');
+  $('loginMessage').textContent=message;
+  $('storageBadge').textContent='Ej inloggad';
+  $('logoutBtn').classList.add('hidden');
+}
+function hideLogin(){ $('authGate').classList.add('hidden'); $('loginMessage').textContent=''; }
+async function performLogin(){
+  const email=$('loginEmail').value.trim(),password=$('loginPassword').value;
+  if(!email||!password){$('loginMessage').textContent='Fyll i både e-post och lösenord.';return}
+  $('loginBtn').disabled=true;$('loginBtn').textContent='Loggar in…';$('loginMessage').textContent='';
+  const {data,error}=await db.auth.signInWithPassword({email,password});
+  $('loginBtn').disabled=false;$('loginBtn').textContent='Logga in';
+  if(error){$('loginMessage').textContent='Inloggningen misslyckades. Kontrollera e-post och lösenord.';return}
+  currentUser=data.user;hideLogin();
+  try{await loadProfile();await cloudLoad();$('storageBadge').textContent='Supabase • online';renderAll()}catch(e){showLogin('Kunde inte läsa Servicekollen-data: '+e.message)}
+}
+async function initAuth(){
+ if(!cloudConfigured){localLoad();$('storageBadge').textContent='Lokal testdata';$('connectionInfo').innerHTML='Supabase är inte konfigurerat ännu. Appen fungerar lokalt för test.';renderAll();return}
+ $('storageBadge').textContent='Supabase';
+ const {data:{session},error}=await db.auth.getSession();
+ if(error){showLogin('Kunde inte kontrollera inloggning.');return}
+ currentUser=session?.user||null;
+ if(!currentUser){showLogin();return}
+ try{hideLogin();await loadProfile();await cloudLoad();$('storageBadge').textContent='Supabase • online';renderAll()}catch(e){$('connectionInfo').textContent='Kunde inte läsa Supabase-data: '+e.message;showLogin('Databasen kunde inte läsas. Kontrollera anslutningen.');}
+}
+function renderHome(){ $('statMachines').textContent=machines.length;let ok=0,fix=0,stop=0;machines.forEach(m=>{const l=latestFor(m.id);if(l?.finalStatus==='ok')ok++;if(l?.finalStatus==='fix')fix++;if(l?.finalStatus==='stop')stop++});$('statOk').textContent=ok;$('statFix').textContent=fix;$('statStop').textContent=stop;const latest=[...services].sort((a,b)=>b.created.localeCompare(a.created)).slice(0,5);$('latestServices').innerHTML=latest.length?`<table><thead><tr><th>Datum</th><th>Maskin</th><th>Status</th></tr></thead><tbody>${latest.map(s=>{const m=machines.find(x=>x.id===s.machineId);return `<tr><td>${esc(s.date)}</td><td>${esc(m?machineLabel(m):'Borttagen maskin')}</td><td>${statusBadge(s.finalStatus)}</td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Ingen service registrerad ännu.</div>'}
+function renderMachines(){const el=$('machineList');if(!machines.length){el.innerHTML='<div class="empty">Inga maskiner registrerade ännu.</div>';return}el.innerHTML=`<table><thead><tr><th>Maskin</th><th>Placering</th><th>Status</th><th></th></tr></thead><tbody>${machines.map(m=>{const l=latestFor(m.id);return `<tr><td><b>${esc(m.brand)} ${esc(m.model||'')}</b><br><span class="muted">${esc(m.serial||m.id)}</span></td><td>${esc(m.location||'–')}</td><td>${statusBadge(l?.finalStatus)}</td><td>${currentRole==='admin'?`<button class="btn secondary" onclick="removeMachine('${m.id}')">Ta bort</button>`:''}</td></tr>`}).join('')}</tbody></table>`}
+window.removeMachine=async id=>{if(!confirm('Ta bort maskinen?'))return;if(cloudConfigured){const {error}=await db.from('machines').delete().eq('id',id);if(error){alert(error.message);return};await persist()}else{machines=machines.filter(m=>m.id!==id);localSave();renderAll()}}
+function renderServiceMachineOptions(){const sel=$('serviceMachine');sel.innerHTML=machines.length?machines.map(m=>`<option value="${m.id}">${esc(machineLabel(m))}</option>`).join(''):'<option value="">Lägg först till en maskin</option>'}
+function renderServiceItems(){const box=$('serviceItems');box.innerHTML=DEFAULT_POINTS.map((p,i)=>`<div class="service-item" data-i="${i}"><h3>${i+1}. ${esc(p)}</h3><div class="status-row"><button class="status-btn" data-v="ok">Godkänd</button><button class="status-btn" data-v="fix">Åtgärdas</button><button class="status-btn" data-v="na">Ej tillämplig</button></div><div class="fix-details hidden"><label>Felbeskrivning</label><textarea class="fault" placeholder="Beskriv felet eller slitaget"></textarea></div></div>`).join('');box.querySelectorAll('.status-btn').forEach(btn=>btn.onclick=()=>{const item=btn.closest('.service-item');item.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('sel-ok','sel-fix','sel-na'));btn.classList.add(btn.dataset.v==='ok'?'sel-ok':btn.dataset.v==='fix'?'sel-fix':'sel-na');item.dataset.status=btn.dataset.v;item.querySelector('.fix-details').classList.toggle('hidden',btn.dataset.v!=='fix')})}
+function resetService(){renderServiceItems();$('serviceComment').value='';$('serviceParts').value='';$('serviceBy').value='';$('finalStatus').value='ok';$('serviceDate').value=new Date().toISOString().slice(0,10)}
+$('addMachine').onclick=async()=>{const model=$('machineModel').value.trim(),serial=$('machineSerial').value.trim();if(!model&&!serial){alert('Ange minst modell eller serienummer/maskin-ID.');return}const row={brand:$('machineBrand').value,model,serial:serial||null,location:$('machineLocation').value.trim()||null,note:$('machineNote').value.trim()||null};if(cloudConfigured){const {error}=await db.from('machines').insert({...row,created_by:currentUser.id});if(error){alert(error.message);return};await persist()}else{machines.push({id:crypto.randomUUID(),...row,created:new Date().toISOString()});localSave();renderAll()}['machineModel','machineSerial','machineLocation','machineNote'].forEach(id=>$(id).value='')}
+$('saveService').onclick=async()=>{const machineId=$('serviceMachine').value;if(!machineId){alert('Lägg först till en maskin.');return}const items=[...document.querySelectorAll('.service-item')];for(const item of items){if(!item.dataset.status){alert('Alla kontrollpunkter måste bedömas.');return}if(item.dataset.status==='fix'&&!item.querySelector('.fault').value.trim()){alert('Felbeskrivning krävs för alla punkter markerade Åtgärdas.');item.querySelector('.fault').focus();return}}const data={machineId,date:$('serviceDate').value||new Date().toISOString().slice(0,10),by:$('serviceBy').value.trim(),checks:items.map((it,i)=>({point:DEFAULT_POINTS[i],status:it.dataset.status,fault:it.querySelector('.fault').value.trim()})),finalStatus:$('finalStatus').value,comment:$('serviceComment').value.trim(),parts:$('serviceParts').value.trim()};if(cloudConfigured){const {error}=await db.from('services').insert({machine_id:data.machineId,service_date:data.date,performed_by:data.by||null,checks:data.checks,final_status:data.finalStatus,comment:data.comment||null,parts:data.parts||null,created_by:currentUser.id});if(error){alert(error.message);return};await persist()}else{services.push({id:crypto.randomUUID(),...data,created:new Date().toISOString()});localSave();renderAll()}alert('Service sparad.');resetService();nav('home')}
+$('resetService').onclick=resetService;
+function renderAdmin(){const el=$('adminTable');if(!machines.length){el.innerHTML='<div class="empty">Inga maskiner registrerade.</div>';return}el.innerHTML=`<table><thead><tr><th>Maskin</th><th>Senaste service</th><th>Status</th><th>Antal service</th></tr></thead><tbody>${machines.map(m=>{const l=latestFor(m.id),count=services.filter(s=>s.machineId===m.id).length;return `<tr><td><b>${esc(machineLabel(m))}</b></td><td>${l?esc(l.date):'–'}</td><td>${statusBadge(l?.finalStatus)}</td><td>${count}</td></tr>`}).join('')}</tbody></table>`}
+$('clearAll').onclick=async()=>{if(cloudConfigured){alert('Central Supabase-data kan inte massraderas från testknappen.');return}if(confirm('Radera ALL lokal testdata?')){machines=[];services=[];localStorage.removeItem('skr_machines');localStorage.removeItem('skr_services');renderAll();resetService()}}
+function renderAll(){renderHome();renderMachines();renderServiceMachineOptions();renderAdmin()}
+$('loginBtn').onclick=performLogin;
+$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')performLogin()});
+$('logoutBtn').onclick=async()=>{if(!cloudConfigured)return;await db.auth.signOut();currentUser=null;currentRole='user';machines=[];services=[];renderAll();showLogin('Du är utloggad.');nav('home')};
+$('serviceDate').value=new Date().toISOString().slice(0,10);renderServiceItems();initAuth();
+</script>
+</body></html>
