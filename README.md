@@ -1,11 +1,10 @@
-# Servicekollen Röjsåg v1.4
+# Servicekollen Röjsåg v1.5
 
 GitHub Pages-klar version med Supabase.
 
-## Nytt i v1.4
-- Klickbara poster under Senaste service.
-- Ny samlad Servicehistorik under Maskiner.
-- Fullständig serviceprotokollvy med maskinuppgifter, utförare, kontrollpunkter, felbeskrivningar, åtgärder, reservdelar och slutstatus.
-- Ingen databasändring krävs från v1.3.
+## Nytt i v1.5
+- Skriv ut / Spara som PDF direkt från öppet serviceprotokoll.
+- Utskriftslayout för A4 där menyer och övriga appdelar döljs.
+- Ingen ny SQL-uppdatering krävs.
 
-Publicera genom att ersätta befintliga filer i GitHub-repots `main`-gren.
+Ladda upp filerna direkt i roten på samma GitHub-repository och commit till `main`.

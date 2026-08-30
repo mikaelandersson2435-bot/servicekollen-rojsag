@@ -18,10 +18,25 @@ label{display:block;font-weight:800;margin:10px 0 6px}input,select,textarea{widt
 .badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:.78rem;font-weight:800}.b-ok{background:#14532d;color:#bbf7d0}.b-fix{background:#713f12;color:#fde68a}.b-stop{background:#7f1d1d;color:#fecaca}.b-neutral{background:#334155;color:#e2e8f0}
 table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}.hidden{display:none!important}.notice{background:#172554;border:1px solid #1d4ed8;border-radius:12px;padding:12px;color:#dbeafe}.footer-note{font-size:.82rem;color:var(--muted);text-align:center;margin-top:18px}.click-row{cursor:pointer}.click-row:active{background:#1e293b}.service-link{background:none;border:0;color:#fff;padding:0;text-align:left;font:inherit;font-weight:800;text-decoration:underline;text-decoration-color:#64748b;text-underline-offset:3px;cursor:pointer}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.detail-box{background:#0f172a;border:1px solid var(--line);border-radius:12px;padding:12px}.detail-box span{display:block;color:var(--muted);font-size:.8rem;margin-bottom:4px}.check-detail{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;background:#0f172a}.modal{position:fixed;inset:0;z-index:80;background:rgba(2,6,23,.78);display:flex;align-items:flex-end;justify-content:center;padding:12px}.modal-panel{width:min(760px,100%);max-height:92vh;overflow:auto;background:#111827;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 24px 80px rgba(0,0,0,.55)}.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;position:sticky;top:-18px;background:#111827;padding:18px 0 10px;z-index:2}.modal-head h2{margin:0}.close-x{flex:0 0 auto}.history-card{border:1px solid var(--line);border-radius:12px;background:#0f172a;padding:12px;margin:8px 0;cursor:pointer}.history-card:active{background:#1e293b}@media(max-width:600px){.detail-grid{grid-template-columns:1fr}}
 @media(max-width:600px){nav{grid-template-columns:repeat(2,1fr)}.row{display:block}.row>*{margin-bottom:8px}.status-row{grid-template-columns:1fr}.brand{align-items:flex-start;flex-direction:column}}
+
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff!important;color:#111!important}
+  header,main,#authGate,.modal::before{display:none!important}
+  #serviceModal{position:static!important;inset:auto!important;display:block!important;background:#fff!important;padding:0!important}
+  #serviceModal.hidden{display:block!important}
+  #serviceModal .modal-panel{width:100%!important;max-height:none!important;overflow:visible!important;background:#fff!important;color:#111!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
+  #serviceModal .modal-head{position:static!important;background:#fff!important;color:#111!important;padding:0 0 10px!important;border-bottom:2px solid #111}
+  #serviceModal .modal-head .muted,#serviceModal .muted{color:#555!important}
+  #serviceModal .modal-actions{display:none!important}
+  #serviceModal .detail-box,#serviceModal .check-detail{background:#fff!important;color:#111!important;border:1px solid #bbb!important;break-inside:avoid}
+  #serviceModal .badge{border:1px solid #777!important;background:#fff!important;color:#111!important}
+  #serviceModal h2,#serviceModal h3,#serviceModal b{color:#111!important}
+}
 </style>
 </head>
 <body>
-<header><div class="wrap"><div class="brand"><div><h1>Servicekollen Röjsåg</h1><small>Vägservice Centralen • v1.4 • Supabase</small></div><div class="row" style="align-items:center"><span class="badge b-neutral" id="storageBadge">Ansluter…</span><button class="btn secondary hidden" id="logoutBtn" type="button">Logga ut</button></div></div>
+<header><div class="wrap"><div class="brand"><div><h1>Servicekollen Röjsåg</h1><small>Vägservice Centralen • v1.5 • Supabase</small></div><div class="row" style="align-items:center"><span class="badge b-neutral" id="storageBadge">Ansluter…</span><button class="btn secondary hidden" id="logoutBtn" type="button">Logga ut</button></div></div>
 <nav>
 <button data-page="home" class="active">Översikt</button>
 <button data-page="service">Ny service</button>
@@ -89,11 +104,11 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px
 </section>
 <div id="serviceModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="serviceModalTitle">
   <div class="modal-panel">
-    <div class="modal-head"><div><h2 id="serviceModalTitle">Serviceprotokoll</h2><div class="muted" id="serviceModalSubtitle"></div></div><button class="btn secondary close-x" id="closeServiceModal" type="button">Stäng</button></div>
+    <div class="modal-head"><div><h2 id="serviceModalTitle">Serviceprotokoll</h2><div class="muted" id="serviceModalSubtitle"></div></div><div class="row modal-actions" style="flex:0 0 auto"><button class="btn primary" id="printServiceModal" type="button">Skriv ut / Spara som PDF</button><button class="btn secondary close-x" id="closeServiceModal" type="button">Stäng</button></div></div>
     <div id="serviceDetail"></div>
   </div>
 </div>
-<div class="footer-note">Servicekollen Röjsåg • v1.4 • Supabase-ansluten</div>
+<div class="footer-note">Servicekollen Röjsåg • v1.5 • Supabase-ansluten</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -197,6 +212,7 @@ window.openServiceDetail=id=>{
 }
 function closeServiceDetail(){$('serviceModal').classList.add('hidden');document.body.style.overflow=''}
 $('closeServiceModal').onclick=closeServiceDetail;
+$('printServiceModal').onclick=()=>window.print();
 $('serviceModal').addEventListener('click',e=>{if(e.target===$('serviceModal'))closeServiceDetail()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('serviceModal').classList.contains('hidden'))closeServiceDetail()});
 function renderMachines(){
