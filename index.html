@@ -36,7 +36,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px
 </style>
 </head>
 <body>
-<header><div class="wrap"><div class="brand"><div><h1>Servicekollen Röjsåg</h1><small>Vägservice Centralen • v1.6 • Supabase</small></div><div class="row" style="align-items:center"><span class="badge b-neutral" id="storageBadge">Ansluter…</span><button class="btn secondary hidden" id="logoutBtn" type="button">Logga ut</button></div></div>
+<header><div class="wrap"><div class="brand"><div><h1>Servicekollen Röjsåg</h1><small>Vägservice Centralen • v1.7 • Supabase</small></div><div class="row" style="align-items:center"><span class="badge b-neutral" id="storageBadge">Ansluter…</span><button class="btn secondary hidden" id="logoutBtn" type="button">Logga ut</button></div></div>
 <nav>
 <button data-page="home" class="active">Översikt</button>
 <button data-page="service">Ny service</button>
@@ -97,7 +97,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px
   <div class="row"><div><label>Märke</label><select id="adminMachineBrand"><option>Husqvarna</option><option>STIHL</option></select></div><div><label>Modell</label><input id="adminMachineModel" placeholder="Ex. 545RXT"></div></div>
   <div class="row"><div><label>Serienummer / Maskin-ID</label><input id="adminMachineSerial" placeholder="Serienummer eller internt ID"></div><div><label>Placering</label><input id="adminMachineLocation" placeholder="Ex. Verkstad / Bil 12"></div></div>
   <label>Driftstatus</label><select id="adminMachineOperational"><option value="active">I drift</option><option value="out_of_service">Ur drift</option></select>
-  <div class="row"><div><label>Serviceintervall (dagar)</label><input id="adminServiceInterval" type="number" min="1" step="1" value="90"></div><div><label>Varna före (dagar)</label><input id="adminServiceWarning" type="number" min="0" step="1" value="14"></div></div>
+  <div class="row"><div><label>Serviceintervall (dagar)</label><input id="adminServiceInterval" type="number" min="1" step="1" value="30"></div><div><label>Varna före (dagar)</label><input id="adminServiceWarning" type="number" min="0" step="1" value="7"></div></div>
   <label>Anteckning</label><textarea id="adminMachineNote" placeholder="Valfri information om maskinen"></textarea>
   <div class="row"><button class="btn primary" id="saveMachineAdmin" type="button">Lägg till maskin</button><button class="btn secondary hidden" id="cancelMachineEdit" type="button">Avbryt redigering</button></div>
 </div>
@@ -112,7 +112,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px
     <div id="serviceDetail"></div>
   </div>
 </div>
-<div class="footer-note">Servicekollen Röjsåg • v1.6 • Supabase-ansluten</div>
+<div class="footer-note">Servicekollen Röjsåg • v1.7 • Supabase-ansluten</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -143,7 +143,7 @@ async function cloudLoad(){
     db.from('services').select('*').order('created_at',{ascending:false})
   ]);
   if(me||se) throw me||se;
-  machines=(m||[]).map(x=>({id:x.id,brand:x.brand,model:x.model,serial:x.serial,location:x.location,note:x.note,operationalStatus:x.operational_status||'active',serviceIntervalDays:Number(x.service_interval_days||90),serviceWarningDays:Number(x.service_warning_days??14),created:x.created_at}));
+  machines=(m||[]).map(x=>({id:x.id,brand:x.brand,model:x.model,serial:x.serial,location:x.location,note:x.note,operationalStatus:x.operational_status||'active',serviceIntervalDays:Number(x.service_interval_days||30),serviceWarningDays:Number(x.service_warning_days??14),created:x.created_at}));
   services=(s||[]).map(x=>({id:x.id,machineId:x.machine_id,date:x.service_date,by:x.performed_by,checks:x.checks||[],finalStatus:x.final_status,comment:x.comment||'',parts:x.parts||'',created:x.created_at}));
 }
 async function persist(){if(cloudConfigured){await cloudLoad()}else localSave();renderAll()}
