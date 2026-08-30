@@ -1,17 +1,11 @@
-# Servicekollen Röjsåg v1.3
+# Servicekollen Röjsåg v1.4
 
 GitHub Pages-klar version med Supabase.
 
-## Nytt i v1.3
-- Maskinadministration under Admin
-- Lägg till maskin
-- Redigera maskin
-- Markera maskin som I drift / Ur drift
-- Radera maskin
-- Maskinregistret är läsvy för vanliga användare
+## Nytt i v1.4
+- Klickbara poster under Senaste service.
+- Ny samlad Servicehistorik under Maskiner.
+- Fullständig serviceprotokollvy med maskinuppgifter, utförare, kontrollpunkter, felbeskrivningar, åtgärder, reservdelar och slutstatus.
+- Ingen databasändring krävs från v1.3.
 
-## Databasuppgradering
-Kör `supabase-v1.3-update.sql` en gång i Supabase SQL Editor innan redigering/driftstatus används.
-
-## GitHub Pages
-Ladda upp filerna i repository-roten. Pages kan fortsätta använda `main` + `/(root)`.
+Publicera genom att ersätta befintliga filer i GitHub-repots `main`-gren.
