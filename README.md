@@ -1,10 +1,11 @@
-# Servicekollen Röjsåg v1.5
+# Servicekollen Röjsåg v1.6
 
 GitHub Pages-klar version med Supabase.
 
-## Nytt i v1.5
-- Skriv ut / Spara som PDF direkt från öppet serviceprotokoll.
-- Utskriftslayout för A4 där menyer och övriga appdelar döljs.
-- Ingen ny SQL-uppdatering krävs.
+Nytt i v1.6:
+- Serviceintervall per maskin (standard 90 dagar)
+- Varning före service (standard 14 dagar)
+- Automatisk status: OK, snart dags eller försenad
+- Nästa servicedatum visas i översikt, maskinregister och admin
 
-Ladda upp filerna direkt i roten på samma GitHub-repository och commit till `main`.
+Kör `supabase-v1.6-update.sql` en gång i Supabase SQL Editor före uppladdning av v1.6.

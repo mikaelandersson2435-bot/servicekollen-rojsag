@@ -36,7 +36,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px
 </style>
 </head>
 <body>
-<header><div class="wrap"><div class="brand"><div><h1>Servicekollen Röjsåg</h1><small>Vägservice Centralen • v1.5 • Supabase</small></div><div class="row" style="align-items:center"><span class="badge b-neutral" id="storageBadge">Ansluter…</span><button class="btn secondary hidden" id="logoutBtn" type="button">Logga ut</button></div></div>
+<header><div class="wrap"><div class="brand"><div><h1>Servicekollen Röjsåg</h1><small>Vägservice Centralen • v1.6 • Supabase</small></div><div class="row" style="align-items:center"><span class="badge b-neutral" id="storageBadge">Ansluter…</span><button class="btn secondary hidden" id="logoutBtn" type="button">Logga ut</button></div></div>
 <nav>
 <button data-page="home" class="active">Översikt</button>
 <button data-page="service">Ny service</button>
@@ -62,7 +62,10 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px
 <div class="stat"><span class="muted">Godkända</span><strong id="statOk">0</strong></div>
 <div class="stat"><span class="muted">Behöver åtgärd</span><strong id="statFix">0</strong></div>
 <div class="stat"><span class="muted">Ur drift</span><strong id="statStop">0</strong></div>
+<div class="stat"><span class="muted">Service snart</span><strong id="statDueSoon">0</strong></div>
+<div class="stat"><span class="muted">Service försenad</span><strong id="statOverdue">0</strong></div>
 </div></div>
+<div class="card"><h2>Serviceintervall</h2><p class="muted">Automatisk bevakning utifrån senaste service och maskinens inställda intervall.</p><div id="serviceDueOverview"></div></div>
 <div class="card"><h2>Senaste service</h2><div id="latestServices" class="empty">Ingen service registrerad ännu.</div></div>
 <div class="notice" id="syncNotice">Servicekollen använder central lagring i Supabase. Logga in för att läsa och registrera maskiner och service.</div>
 </section>
@@ -94,6 +97,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px
   <div class="row"><div><label>Märke</label><select id="adminMachineBrand"><option>Husqvarna</option><option>STIHL</option></select></div><div><label>Modell</label><input id="adminMachineModel" placeholder="Ex. 545RXT"></div></div>
   <div class="row"><div><label>Serienummer / Maskin-ID</label><input id="adminMachineSerial" placeholder="Serienummer eller internt ID"></div><div><label>Placering</label><input id="adminMachineLocation" placeholder="Ex. Verkstad / Bil 12"></div></div>
   <label>Driftstatus</label><select id="adminMachineOperational"><option value="active">I drift</option><option value="out_of_service">Ur drift</option></select>
+  <div class="row"><div><label>Serviceintervall (dagar)</label><input id="adminServiceInterval" type="number" min="1" step="1" value="90"></div><div><label>Varna före (dagar)</label><input id="adminServiceWarning" type="number" min="0" step="1" value="14"></div></div>
   <label>Anteckning</label><textarea id="adminMachineNote" placeholder="Valfri information om maskinen"></textarea>
   <div class="row"><button class="btn primary" id="saveMachineAdmin" type="button">Lägg till maskin</button><button class="btn secondary hidden" id="cancelMachineEdit" type="button">Avbryt redigering</button></div>
 </div>
@@ -108,7 +112,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 7px
     <div id="serviceDetail"></div>
   </div>
 </div>
-<div class="footer-note">Servicekollen Röjsåg • v1.5 • Supabase-ansluten</div>
+<div class="footer-note">Servicekollen Röjsåg • v1.6 • Supabase-ansluten</div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -126,7 +130,11 @@ function nav(page){document.querySelectorAll('.page').forEach(x=>x.classList.tog
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>nav(b.dataset.page));
 function machineLabel(m){return `${m.brand} ${m.model||'Okänd modell'} — ${m.serial||m.id}`}
 function statusBadge(s){if(s==='ok')return '<span class="badge b-ok">Godkänd</span>';if(s==='fix')return '<span class="badge b-fix">Behöver åtgärd</span>';if(s==='stop')return '<span class="badge b-stop">Ur drift</span>';return '<span class="badge b-neutral">Ej servad</span>'}
-function latestFor(mid){return services.filter(s=>s.machineId===mid).sort((a,b)=>b.created.localeCompare(a.created))[0]}
+function latestFor(mid){return services.filter(s=>s.machineId===mid).sort((a,b)=>String(b.date||b.created).localeCompare(String(a.date||a.created)))[0]}
+function addDays(dateStr,days){const d=new Date(dateStr+'T12:00:00');d.setDate(d.getDate()+Number(days||0));return d}
+function isoDate(d){return d.toISOString().slice(0,10)}
+function serviceDueInfo(m){const interval=Number(m.serviceIntervalDays||90),warning=Number(m.serviceWarningDays??14),latest=latestFor(m.id);if(!latest)return {state:'overdue',label:'Ej servad',due:null,days:null};const due=addDays(latest.date,interval);const today=new Date();today.setHours(12,0,0,0);const days=Math.ceil((due-today)/86400000);if(days<0)return {state:'overdue',label:`Försenad ${Math.abs(days)} dagar`,due:isoDate(due),days};if(days<=warning)return {state:'soon',label:days===0?'Service idag':`Om ${days} dagar`,due:isoDate(due),days};return {state:'ok',label:`Om ${days} dagar`,due:isoDate(due),days}}
+function dueBadge(info){if(info.state==='overdue')return `<span class="badge b-stop">${esc(info.label)}</span>`;if(info.state==='soon')return `<span class="badge b-fix">${esc(info.label)}</span>`;return `<span class="badge b-ok">${esc(info.label)}</span>`}
 function localLoad(){machines=JSON.parse(localStorage.getItem('skr_machines')||'[]');services=JSON.parse(localStorage.getItem('skr_services')||'[]')}
 function localSave(){localStorage.setItem('skr_machines',JSON.stringify(machines));localStorage.setItem('skr_services',JSON.stringify(services))}
 async function cloudLoad(){
@@ -135,7 +143,7 @@ async function cloudLoad(){
     db.from('services').select('*').order('created_at',{ascending:false})
   ]);
   if(me||se) throw me||se;
-  machines=(m||[]).map(x=>({id:x.id,brand:x.brand,model:x.model,serial:x.serial,location:x.location,note:x.note,operationalStatus:x.operational_status||'active',created:x.created_at}));
+  machines=(m||[]).map(x=>({id:x.id,brand:x.brand,model:x.model,serial:x.serial,location:x.location,note:x.note,operationalStatus:x.operational_status||'active',serviceIntervalDays:Number(x.service_interval_days||90),serviceWarningDays:Number(x.service_warning_days??14),created:x.created_at}));
   services=(s||[]).map(x=>({id:x.id,machineId:x.machine_id,date:x.service_date,by:x.performed_by,checks:x.checks||[],finalStatus:x.final_status,comment:x.comment||'',parts:x.parts||'',created:x.created_at}));
 }
 async function persist(){if(cloudConfigured){await cloudLoad()}else localSave();renderAll()}
@@ -176,9 +184,11 @@ async function initAuth(){
  try{hideLogin();await loadProfile();await cloudLoad();$('storageBadge').textContent='Supabase • online';renderAll()}catch(e){$('connectionInfo').textContent='Kunde inte läsa Supabase-data: '+e.message;showLogin('Databasen kunde inte läsas. Kontrollera anslutningen.');}
 }
 function renderHome(){
-  $('statMachines').textContent=machines.length;let ok=0,fix=0,stop=0;
-  machines.forEach(m=>{const l=latestFor(m.id);if(l?.finalStatus==='ok')ok++;if(l?.finalStatus==='fix')fix++;if(l?.finalStatus==='stop')stop++});
-  $('statOk').textContent=ok;$('statFix').textContent=fix;$('statStop').textContent=stop;
+  $('statMachines').textContent=machines.length;let ok=0,fix=0,stop=0,soon=0,overdue=0;
+  machines.forEach(m=>{const l=latestFor(m.id);if(l?.finalStatus==='ok')ok++;if(l?.finalStatus==='fix')fix++;if(l?.finalStatus==='stop')stop++;const d=serviceDueInfo(m);if(d.state==='soon')soon++;if(d.state==='overdue')overdue++});
+  $('statOk').textContent=ok;$('statFix').textContent=fix;$('statStop').textContent=stop;$('statDueSoon').textContent=soon;$('statOverdue').textContent=overdue;
+  const dueSorted=[...machines].sort((a,b)=>{const aa=serviceDueInfo(a),bb=serviceDueInfo(b);const rank={overdue:0,soon:1,ok:2};return rank[aa.state]-rank[bb.state]||(aa.days??-999)-(bb.days??-999)});
+  $('serviceDueOverview').innerHTML=dueSorted.length?`<table><thead><tr><th>Maskin</th><th>Nästa service</th><th>Läge</th></tr></thead><tbody>${dueSorted.map(m=>{const d=serviceDueInfo(m);return `<tr><td><b>${esc(machineLabel(m))}</b></td><td>${d.due?esc(d.due):'Snarast'}</td><td>${dueBadge(d)}</td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Inga maskiner registrerade.</div>';
   const latest=[...services].sort((a,b)=>b.created.localeCompare(a.created)).slice(0,5);
   $('latestServices').innerHTML=latest.length?`<table><thead><tr><th>Datum</th><th>Maskin</th><th>Status</th></tr></thead><tbody>${latest.map(s=>{const m=machines.find(x=>x.id===s.machineId);return `<tr class="click-row" onclick="openServiceDetail('${s.id}')"><td>${esc(s.date)}</td><td><button class="service-link" type="button">${esc(m?machineLabel(m):'Borttagen maskin')}</button></td><td>${statusBadge(s.finalStatus)}</td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Ingen service registrerad ännu.</div>'
 }
@@ -218,14 +228,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('serviceModal').
 function renderMachines(){
   const el=$('machineList');
   if(!machines.length){el.innerHTML='<div class="empty">Inga maskiner registrerade ännu.</div>';return}
-  el.innerHTML=`<table><thead><tr><th>Maskin</th><th>Placering</th><th>Driftstatus</th><th>Service</th></tr></thead><tbody>${machines.map(m=>{const l=latestFor(m.id);return `<tr><td><b>${esc(m.brand)} ${esc(m.model||'')}</b><br><span class="muted">${esc(m.serial||m.id)}</span></td><td>${esc(m.location||'–')}</td><td>${operationalBadge(m.operationalStatus)}</td><td>${statusBadge(l?.finalStatus)}</td></tr>`}).join('')}</tbody></table>`
+  el.innerHTML=`<table><thead><tr><th>Maskin</th><th>Placering</th><th>Driftstatus</th><th>Nästa service</th></tr></thead><tbody>${machines.map(m=>{const d=serviceDueInfo(m);return `<tr><td><b>${esc(m.brand)} ${esc(m.model||'')}</b><br><span class="muted">${esc(m.serial||m.id)}</span></td><td>${esc(m.location||'–')}</td><td>${operationalBadge(m.operationalStatus)}</td><td>${dueBadge(d)}<br><span class="muted">${d.due?esc(d.due):'Ingen tidigare service'}</span></td></tr>`}).join('')}</tbody></table>`
 }
 function clearAdminMachineForm(){
-  $('adminMachineId').value='';$('adminMachineBrand').value='Husqvarna';$('adminMachineModel').value='';$('adminMachineSerial').value='';$('adminMachineLocation').value='';$('adminMachineOperational').value='active';$('adminMachineNote').value='';$('saveMachineAdmin').textContent='Lägg till maskin';$('cancelMachineEdit').classList.add('hidden');
+  $('adminMachineId').value='';$('adminMachineBrand').value='Husqvarna';$('adminMachineModel').value='';$('adminMachineSerial').value='';$('adminMachineLocation').value='';$('adminMachineOperational').value='active';$('adminServiceInterval').value='90';$('adminServiceWarning').value='14';$('adminMachineNote').value='';$('saveMachineAdmin').textContent='Lägg till maskin';$('cancelMachineEdit').classList.add('hidden');
 }
 window.editMachine=id=>{
   const m=machines.find(x=>x.id===id);if(!m)return;
-  $('adminMachineId').value=m.id;$('adminMachineBrand').value=m.brand;$('adminMachineModel').value=m.model||'';$('adminMachineSerial').value=m.serial||'';$('adminMachineLocation').value=m.location||'';$('adminMachineOperational').value=m.operationalStatus||'active';$('adminMachineNote').value=m.note||'';$('saveMachineAdmin').textContent='Spara ändringar';$('cancelMachineEdit').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});
+  $('adminMachineId').value=m.id;$('adminMachineBrand').value=m.brand;$('adminMachineModel').value=m.model||'';$('adminMachineSerial').value=m.serial||'';$('adminMachineLocation').value=m.location||'';$('adminMachineOperational').value=m.operationalStatus||'active';$('adminServiceInterval').value=m.serviceIntervalDays||90;$('adminServiceWarning').value=m.serviceWarningDays??14;$('adminMachineNote').value=m.note||'';$('saveMachineAdmin').textContent='Spara ändringar';$('cancelMachineEdit').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});
 }
 window.removeMachine=async id=>{
   const m=machines.find(x=>x.id===id);if(!m)return;
@@ -241,7 +251,7 @@ $('saveMachineAdmin').onclick=async()=>{
   if(currentRole!=='admin'){alert('Endast administratörer kan ändra maskinregistret.');return}
   const id=$('adminMachineId').value,model=$('adminMachineModel').value.trim(),serial=$('adminMachineSerial').value.trim();
   if(!model&&!serial){alert('Ange minst modell eller serienummer/maskin-ID.');return}
-  const row={brand:$('adminMachineBrand').value,model:model||null,serial:serial||null,location:$('adminMachineLocation').value.trim()||null,note:$('adminMachineNote').value.trim()||null,operational_status:$('adminMachineOperational').value};
+  const interval=Math.max(1,Number($('adminServiceInterval').value||90)),warning=Math.max(0,Number($('adminServiceWarning').value||14));if(warning>=interval){alert('Varningstiden måste vara kortare än serviceintervallet.');return}const row={brand:$('adminMachineBrand').value,model:model||null,serial:serial||null,location:$('adminMachineLocation').value.trim()||null,note:$('adminMachineNote').value.trim()||null,operational_status:$('adminMachineOperational').value,service_interval_days:interval,service_warning_days:warning};
   if(cloudConfigured){
     let error;
     if(id){({error}=await db.from('machines').update(row).eq('id',id))}
@@ -249,8 +259,8 @@ $('saveMachineAdmin').onclick=async()=>{
     if(error){alert(error.message);return}
     await persist();
   }else{
-    if(id){const i=machines.findIndex(x=>x.id===id);if(i>=0)machines[i]={...machines[i],...row,operationalStatus:row.operational_status}}
-    else machines.push({id:crypto.randomUUID(),...row,operationalStatus:row.operational_status,created:new Date().toISOString()});
+    if(id){const i=machines.findIndex(x=>x.id===id);if(i>=0)machines[i]={...machines[i],...row,operationalStatus:row.operational_status,serviceIntervalDays:row.service_interval_days,serviceWarningDays:row.service_warning_days}}
+    else machines.push({id:crypto.randomUUID(),...row,operationalStatus:row.operational_status,serviceIntervalDays:row.service_interval_days,serviceWarningDays:row.service_warning_days,created:new Date().toISOString()});
     localSave();renderAll();
   }
   clearAdminMachineForm();alert(id?'Maskinen uppdaterades.':'Maskinen lades till.');
@@ -261,7 +271,7 @@ function renderServiceItems(){const box=$('serviceItems');box.innerHTML=DEFAULT_
 function resetService(){renderServiceItems();$('serviceComment').value='';$('serviceParts').value='';$('serviceBy').value='';$('finalStatus').value='ok';$('serviceDate').value=new Date().toISOString().slice(0,10)}
 $('saveService').onclick=async()=>{const machineId=$('serviceMachine').value;if(!machineId){alert('Lägg först till en maskin.');return}const items=[...document.querySelectorAll('.service-item')];for(const item of items){if(!item.dataset.status){alert('Alla kontrollpunkter måste bedömas.');return}if(item.dataset.status==='fix'&&!item.querySelector('.fault').value.trim()){alert('Felbeskrivning krävs för alla punkter markerade Åtgärdas.');item.querySelector('.fault').focus();return}}const data={machineId,date:$('serviceDate').value||new Date().toISOString().slice(0,10),by:$('serviceBy').value.trim(),checks:items.map((it,i)=>({point:DEFAULT_POINTS[i],status:it.dataset.status,fault:it.querySelector('.fault').value.trim()})),finalStatus:$('finalStatus').value,comment:$('serviceComment').value.trim(),parts:$('serviceParts').value.trim()};if(cloudConfigured){const {error}=await db.from('services').insert({machine_id:data.machineId,service_date:data.date,performed_by:data.by||null,checks:data.checks,final_status:data.finalStatus,comment:data.comment||null,parts:data.parts||null,created_by:currentUser.id});if(error){alert(error.message);return};await persist()}else{services.push({id:crypto.randomUUID(),...data,created:new Date().toISOString()});localSave();renderAll()}alert('Service sparad.');resetService();nav('home')}
 $('resetService').onclick=resetService;
-function renderAdmin(){const el=$('adminTable');if(!machines.length){el.innerHTML='<div class="empty">Inga maskiner registrerade.</div>';return}el.innerHTML=`<table><thead><tr><th>Maskin</th><th>Senaste service</th><th>Status</th><th>Antal service</th></tr></thead><tbody>${machines.map(m=>{const l=latestFor(m.id),count=services.filter(s=>s.machineId===m.id).length;return `<tr><td><b>${esc(machineLabel(m))}</b></td><td>${l?esc(l.date):'–'}</td><td>${statusBadge(l?.finalStatus)}</td><td>${count}</td></tr>`}).join('')}</tbody></table>`}
+function renderAdmin(){const el=$('adminTable');if(!machines.length){el.innerHTML='<div class="empty">Inga maskiner registrerade.</div>';return}el.innerHTML=`<table><thead><tr><th>Maskin</th><th>Senaste service</th><th>Nästa service</th><th>Intervall</th><th>Antal</th></tr></thead><tbody>${machines.map(m=>{const l=latestFor(m.id),d=serviceDueInfo(m),count=services.filter(s=>s.machineId===m.id).length;return `<tr><td><b>${esc(machineLabel(m))}</b></td><td>${l?esc(l.date):'–'}</td><td>${dueBadge(d)}<br><span class="muted">${d.due?esc(d.due):'Snarast'}</span></td><td>${esc(m.serviceIntervalDays||90)} dagar</td><td>${count}</td></tr>`}).join('')}</tbody></table>`}
 $('clearAll').onclick=async()=>{if(cloudConfigured){alert('Central Supabase-data kan inte massraderas från testknappen.');return}if(confirm('Radera ALL lokal testdata?')){machines=[];services=[];localStorage.removeItem('skr_machines');localStorage.removeItem('skr_services');renderAll();resetService()}}
 function renderAll(){renderHome();renderMachines();renderServiceHistory();renderServiceMachineOptions();renderAdminMachineList();renderAdmin()}
 $('loginBtn').onclick=performLogin;
