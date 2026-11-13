@@ -279,4 +279,5 @@ $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')performLogi
 $('logoutBtn').onclick=async()=>{if(!cloudConfigured)return;await db.auth.signOut();currentUser=null;currentRole='user';machines=[];services=[];renderAll();showLogin('Du är utloggad.');nav('home')};
 $('serviceDate').value=new Date().toISOString().slice(0,10);renderServiceItems();initAuth();
 </script>
+  <script src="verkstadskollen.js"></script>
 </body></html>
