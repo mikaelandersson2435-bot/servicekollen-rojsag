@@ -285,4 +285,20 @@ $('serviceDate').value=new Date().toISOString().slice(0,10);renderServiceItems()
   <script src="verkstadskollen.js"></script>
   <script src="verkstadskollen-sprangskisser.js"></script>
   <script src="verkstadskollen-guide.js"></script>
+<script>
+// Remove the legacy workshop menu entry; retain the version 2.2 link.
+(() => {
+  const menu = document.querySelector('header nav');
+  if (!menu) return;
+  const removeLegacyWorkshopButton = () => {
+    menu.querySelectorAll('button, a').forEach(entry => {
+      if (entry.textContent.trim() === 'Verkstadskollen') entry.remove();
+    });
+  };
+  removeLegacyWorkshopButton();
+  new MutationObserver(removeLegacyWorkshopButton).observe(menu, {
+    childList: true, subtree: true, characterData: true
+  });
+})();
+</script>
 </body></html>
